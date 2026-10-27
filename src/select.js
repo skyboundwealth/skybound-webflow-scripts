@@ -103,13 +103,17 @@
     '.sb-sel__trigger{display:flex;align-items:center;justify-content:space-between;gap:.5em;width:100%;text-align:left;cursor:pointer;}',
     '.sb-sel__trigger.is-placeholder .sb-sel__label{opacity:.6;}',
     '.sb-sel__label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
-    '.sb-sel__chev{flex:none;width:0;height:0;border-left:.3em solid transparent;border-right:.3em solid transparent;border-top:.35em solid currentColor;opacity:.6;transition:transform .15s;}',
-    '.sb-sel.is-open .sb-sel__chev{transform:rotate(180deg);}',
+    '.sb-sel__chev{flex:none;display:block;width:.8em;transition:rotate .2s ease;}',
+    '.sb-sel__chev svg{display:block;width:100%;height:auto;overflow:visible;}',
+    '.sb-sel.is-open .sb-sel__chev{rotate:180deg;}',
+    '.sb-sel__icon{transition:rotate .2s ease;}',
+    '.sb-sel__icon.is-open{rotate:180deg;}',
     '.sb-sel__panel{position:absolute;left:0;top:calc(100% + 4px);z-index:1000;display:none;flex-direction:column;overflow:hidden;min-width:100%;width:max-content;max-width:min(92vw,380px);box-shadow:0 8px 24px rgba(0,0,0,.12);}',
     '.sb-sel.is-open .sb-sel__panel{display:flex;}',
     '.sb-sel.is-up .sb-sel__panel{top:auto;bottom:calc(100% + 4px);}',
     '.sb-sel.is-right .sb-sel__panel{left:auto;right:0;}',
-    '.sb-sel__search{margin:.5em .5em .25em;padding:.5em .75em;border:1px solid currentColor;border-color:rgba(127,127,127,.35);border-radius:.375em;font:inherit;color:inherit;background:transparent;outline-offset:0;}',
+    '.sb-sel__search{flex:none;box-sizing:border-box;margin:.5em .5em .25em!important;width:calc(100% - 1em)!important;min-width:0!important;}',
+    '.sb-sel__search.is-plain{padding:.5em .75em;border:1px solid rgba(127,127,127,.35);border-radius:.375em;font:inherit;color:inherit;background:transparent;}',
     '.sb-sel__list{overflow-y:auto;overscroll-behavior:contain;margin:0;padding:.25em 0;list-style:none;}',
     '.sb-sel__opt{display:flex;align-items:center;gap:.5em;padding:.55em .9em;cursor:pointer;}',
     '.sb-sel__opt.is-active{background:rgba(127,127,127,.14);}',
@@ -119,6 +123,15 @@
     '.sb-sel__empty{padding:.55em .9em;opacity:.6;}'
   ].join('');
   document.head.appendChild(style);
+
+  // A line arrow, the same shape as Webflow's select icon.
+  function chevron(className) {
+    var wrap = document.createElement('span');
+    wrap.className = className;
+    wrap.setAttribute('aria-hidden', 'true');
+    wrap.innerHTML = '<svg viewBox="0 0 6 5" fill="none" aria-hidden="true"><path d="M0.5 1L3 3.5L5.5 1" stroke="currentColor" stroke-width="0.125rem" vector-effect="non-scaling-stroke"></path></svg>';
+    return wrap;
+  }
 
   function norm(s) {
     return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -194,6 +207,24 @@
     var trigger = opts.trigger;
     var labelSpan = null;
     var look = window.getComputedStyle(select);
+    // The field's own classes (like form_field), so the search box looks like your fields.
+    var fieldClass = opts.anchor
+      ? ((opts.anchor.querySelector('input') || {}).className || '')
+      : select.className;
+
+    // Your own arrow icon next to the Select (like Webflow's form_select_icon).
+    // We keep it and spin it, instead of adding our own.
+    var icon = null;
+    if (!opts.trigger && select.parentElement) {
+      var p0 = select.parentElement;
+      icon = p0.querySelector(':scope > [data-select-icon]') ||
+             p0.querySelector(':scope > .form_select_icon') ||
+             p0.querySelector(':scope > svg');
+      if (icon) {
+        icon.classList.add('sb-sel__icon');
+        icon.style.pointerEvents = 'none';
+      }
+    }
 
     if (!anchor) {
       anchor = document.createElement('div');
@@ -221,12 +252,8 @@
       labelSpan = document.createElement('span');
       labelSpan.className = 'sb-sel__label';
       trigger.appendChild(labelSpan);
-      // Only add our arrow if the Select's class does not draw one.
-      if (look.backgroundImage === 'none') {
-        var chev = document.createElement('span');
-        chev.className = 'sb-sel__chev';
-        trigger.appendChild(chev);
-      }
+      // Only add our arrow if there is no arrow icon and the Select's class does not draw one.
+      if (!icon && look.backgroundImage === 'none') trigger.appendChild(chevron('sb-sel__chev'));
       anchor.insertBefore(trigger, select);
     } else {
       trigger.setAttribute('tabindex', '0');
@@ -273,7 +300,8 @@
     function makeSearch() {
       search = document.createElement('input');
       search.type = 'text';
-      search.className = 'sb-sel__search';
+      // Same classes as your fields, so it uses your site's border, colours and focus style.
+      search.className = fieldClass.replace(/\bsb-sel__\S+/g, '').trim() + ' sb-sel__search' + (fieldClass ? '' : ' is-plain');
       search.placeholder = SEARCH_PLACEHOLDER;
       search.setAttribute('autocomplete', 'off');
       search.setAttribute('aria-label', SEARCH_PLACEHOLDER);
@@ -419,6 +447,7 @@
 
       anchor.classList.remove('is-right');
       anchor.classList.add('is-open');
+      if (icon) icon.classList.add('is-open');
       // The list can be wider than the button. Keep it on screen.
       if (panel.getBoundingClientRect().right > window.innerWidth - 8) anchor.classList.add('is-right');
       trigger.setAttribute('aria-expanded', 'true');
@@ -433,6 +462,7 @@
     function close(focusTrigger) {
       if (!anchor.classList.contains('is-open')) return;
       anchor.classList.remove('is-open', 'is-up', 'is-right');
+      if (icon) icon.classList.remove('is-open');
       trigger.setAttribute('aria-expanded', 'false');
       trigger.removeAttribute('aria-activedescendant');
       document.removeEventListener('pointerdown', onOutside, true);
@@ -543,7 +573,7 @@
   }
 
   // Public, for the phone picker.
-  window.SBSelect = { enhance: enhance, useNative: useNative };
+  window.SBSelect = { enhance: enhance, useNative: useNative, chevron: chevron };
 
   // ---- Start ----
   Array.prototype.slice.call(document.querySelectorAll('select[data-select], select[data-select-list]')).forEach(function (select) {

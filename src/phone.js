@@ -44,13 +44,13 @@
     '.sb-phone{position:relative;display:block;}',
     '.sb-phone__prefix{position:absolute;top:0;bottom:0;display:flex;align-items:center;gap:.4em;pointer-events:none;white-space:nowrap;}',
     '.sb-phone__prefix .iti__flag{flex:none;}',
-    '.sb-phone__arrow{width:0;height:0;border-left:.3em solid transparent;border-right:.3em solid transparent;border-top:.35em solid currentColor;opacity:.6;}',
+    '.sb-phone__arrow{flex:none;display:block;width:.8em;transition:rotate .2s ease;}',
+    '.sb-phone__arrow svg{display:block;width:100%;height:auto;overflow:visible;}',
     '.sb-phone__select{position:absolute;top:0;bottom:0;left:0;opacity:0;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none;border:0;margin:0;padding:0;}',
     '.sb-phone.is-focus .sb-phone__prefix{outline:2px solid currentColor;outline-offset:2px;border-radius:2px;}',
     '.sb-phone__prefix:focus{outline:none;}',
     '.sb-phone__prefix:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:2px;}',
-    '.sb-phone__arrow{transition:transform .15s;}',
-    '.sb-phone.is-open .sb-phone__arrow{transform:rotate(180deg);}'
+    '.sb-phone.is-open .sb-phone__arrow{rotate:180deg;}'
   ].join('');
   document.head.appendChild(style);
 
@@ -167,6 +167,8 @@
     var code = document.createElement('span');
     var arrow = document.createElement('span');
     arrow.className = 'sb-phone__arrow';
+    // Line arrow, the same shape as the other dropdowns. It spins when the list opens.
+    arrow.innerHTML = '<svg viewBox="0 0 6 5" fill="none" aria-hidden="true"><path d="M0.5 1L3 3.5L5.5 1" stroke="currentColor" stroke-width="0.125rem" vector-effect="non-scaling-stroke"></path></svg>';
     if (SHOW_FLAGS) prefix.appendChild(flag);
     prefix.appendChild(code);
     prefix.appendChild(arrow);
