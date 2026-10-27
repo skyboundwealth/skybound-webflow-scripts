@@ -10,6 +10,8 @@ Scripts for the Skybound Wealth Webflow site forms. Served from this repository 
 | `src/phone.js` | Dial code with flags inside the phone field. Checks the number. Sends the full number. |
 | `src/video-unlock.js` | Soft gate for on-demand videos. On-demand page template only. |
 
+`dist/` holds the small (minified) copies that Webflow loads. Rebuild them with `./build.sh`.
+
 The Cloudflare Worker code is not in this repository. It lives in Cloudflare.
 
 ## Install
@@ -103,11 +105,12 @@ window.SB_CONFIG = {
 ## Making a change
 
 1. Edit the file in `src/`.
-2. Create a new release (tag), like `v1.0.1`.
-3. In the Webflow footer, change `v1.0.0` to `v1.0.1` in the script addresses. Publish.
+2. Run `./build.sh` to rebuild the small files in `dist/` (needs esbuild: `npm i -g esbuild`).
+3. Commit both, then create a new release (tag) on GitHub, like `v1.0.1`.
+4. In the Webflow footer, change `v1.0.0` to `v1.0.1` in the script addresses. Publish.
 
-jsDelivr makes the `.min.js` version by itself. Old versions keep working, so a bad change
-can be undone by switching the version number back.
+Webflow loads the files in `dist/`. `src/` is the readable copy to edit.
+Old versions keep working, so a bad change can be undone by switching the version number back.
 
 ## Known gaps
 

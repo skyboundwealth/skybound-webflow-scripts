@@ -1,5 +1,5 @@
 /*!
- * Skybound forms — video-unlock.js
+ * Skybound forms - video-unlock.js
  * Soft gate for on-demand videos. Load it only on the on-demand page template.
  *
  * Webflow (same KEY on all):

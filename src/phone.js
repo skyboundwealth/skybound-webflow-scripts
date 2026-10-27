@@ -1,5 +1,5 @@
 /*!
- * Skybound forms — phone.js
+ * Skybound forms - phone.js
  * Dial code inside the phone field, with flags. Desktop: designed dropdown (needs select.js).
  * Phones: the browser's own picker. Number checks by intl-tel-input v25.4.3 (from cdnjs).
  *

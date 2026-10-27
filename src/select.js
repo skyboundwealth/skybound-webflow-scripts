@@ -1,5 +1,5 @@
 /*!
- * Skybound forms — select.js
+ * Skybound forms - select.js
  * Turns normal Webflow Select fields into a designed dropdown, with a search box on long lists.
  * Phones keep the browser's own picker. The normal Select stays hidden underneath, so form
  * values, required checks, Finsweet filters and Make all keep working.

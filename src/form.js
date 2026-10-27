@@ -1,5 +1,5 @@
 /*!
- * Skybound forms — form.js
+ * Skybound forms - form.js
  * Sends Webflow forms (with data-hub-form) to the Cloudflare Worker, with spam checks,
  * Turnstile, ad tracking (UTMs, 30 days, needs Consent Pro "Marketing"), page slug and locale.
  * Shows the Webflow success / error message. No redirect.
