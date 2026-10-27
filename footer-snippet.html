@@ -1,0 +1,26 @@
+<!--
+  Skybound forms: paste this into
+  Webflow > Site settings > Custom code > Footer code.
+  Put it AFTER Consent Pro. Change the 2 settings lines.
+  To update the scripts later, change v1.0.0 in the 3 addresses to the new version.
+-->
+<script>
+  window.SB_CONFIG = {
+    workerUrl: 'https://YOUR-WORKER-NAME.YOUR-ACCOUNT.workers.dev',
+    turnstileSiteKey: 'YOUR_TURNSTILE_SITE_KEY'
+
+    // Optional settings. See README.md for the full list, for example:
+    // , phone: { countryOrder: ['gb', 'ae', 'ch', 'us'] }
+    // , form: { attributionDays: 30 }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/gh/skyboundwealth/skybound-webflow-scripts@v1.0.0/src/form.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/gh/skyboundwealth/skybound-webflow-scripts@v1.0.0/src/select.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/gh/skyboundwealth/skybound-webflow-scripts@v1.0.0/src/phone.min.js" defer></script>
+
+<!--
+  On-demand page template ONLY:
+  Page settings > Custom code > Before </body> tag:
+
+<script src="https://cdn.jsdelivr.net/gh/skyboundwealth/skybound-webflow-scripts@v1.0.0/src/video-unlock.min.js" defer></script>
+-->
