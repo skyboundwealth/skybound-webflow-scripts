@@ -70,13 +70,30 @@
     startWhenReady();
   }
 
+  // The country is saved for the visit (this browser tab), so the Worker is asked
+  // only once per visit, not on every page.
+  var COUNTRY_KEY = 'sb_country';
+  function readSavedCountry() {
+    try { return window.sessionStorage.getItem(COUNTRY_KEY); } catch (e) { return null; }
+  }
+  function saveCountry(code) {
+    try { window.sessionStorage.setItem(COUNTRY_KEY, code); } catch (e) {}
+  }
+
+  var savedCountry = readSavedCountry();
   var workerUrl = CONFIG.workerUrl || window.SB_WORKER_URL;
-  if (workerUrl && window.fetch && !/YOUR-WORKER/.test(workerUrl)) {
+  if (savedCountry !== null) {
+    finishCountry(savedCountry); // An empty value means the Worker did not know. Do not ask again.
+  } else if (workerUrl && window.fetch && !/YOUR-WORKER/.test(workerUrl)) {
     setTimeout(function () { finishCountry(''); }, COUNTRY_WAIT_MS);
     fetch(workerUrl, { method: 'GET' })
       .then(function (res) { return res.json(); })
-      .then(function (body) { finishCountry(body && body.country); })
-      .catch(function () { finishCountry(''); });
+      .then(function (body) {
+        var code = body && typeof body.country === 'string' ? body.country : '';
+        saveCountry(/^[a-z]{2}$/.test(code) ? code : '');
+        finishCountry(code);
+      })
+      .catch(function () { finishCountry(''); }); // Not saved, so the next page tries again.
   } else {
     finishCountry('');
   }
