@@ -7,6 +7,7 @@
  *   Cover div over video:    data-unlock-cover = KEY
  *   Optional, form section:  data-unlock-hide = KEY   (hidden on return visits)
  *   Optional, other content: data-unlock-show = KEY   (shown only on return visits)
+ *   Optional, over the video: data-unlock-reveal = KEY (shown once unlocked, any way)
  * Email link: add ?access=KEY to the page address.
  * Unlocks are remembered for 30 days in this browser.
  *
@@ -22,10 +23,10 @@
   var STORAGE_KEY = 'sb_unlocked';
   var SHOWN_CLASS = 'is-unlocked';
 
-  // data-unlock-show content stays hidden until it is unlocked.
+  // data-unlock-show and data-unlock-reveal content stays hidden until it is unlocked.
   // Put the same rule in the page head too, so it never flashes on screen.
   var style = document.createElement('style');
-  style.textContent = '[data-unlock-show]:not(.' + SHOWN_CLASS + '){display:none!important;}';
+  style.textContent = '[data-unlock-show]:not(.' + SHOWN_CLASS + '),[data-unlock-reveal]:not(.' + SHOWN_CLASS + '){display:none!important;}';
   document.head.appendChild(style);
 
   function loadUnlocks() {
@@ -58,6 +59,7 @@
 
   function unlock(key, onLoad) {
     eachWithValue('data-unlock-cover', key, function (el) { el.remove(); });
+    eachWithValue('data-unlock-reveal', key, function (el) { el.classList.add(SHOWN_CLASS); });
     if (onLoad) {
       eachWithValue('data-unlock-hide', key, function (el) { el.style.display = 'none'; });
       eachWithValue('data-unlock-show', key, function (el) { el.classList.add(SHOWN_CLASS); });
