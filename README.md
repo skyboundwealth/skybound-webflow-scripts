@@ -50,6 +50,13 @@ Webflow's own bot protection must be **off** (Site settings > Apps & Integration
 | Form | `data-unlock` | the key |
 | Cover div over the video | `data-unlock-cover` | the key |
 | Form section *(optional)* | `data-unlock-hide` | the key |
+| Other content *(optional)* | `data-unlock-show` | the key. Shown only on return visits and from the email link, in place of the form |
+
+For `data-unlock-show`, add this to the template's **Inside `<head>` tag** code, so it never flashes on screen:
+
+```html
+<style>[data-unlock-show]:not(.is-unlocked){display:none!important;}</style>
+```
 
 Email link: `https://.../on-demand/your-webinar?access=KEY`
 
