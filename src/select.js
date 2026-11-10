@@ -148,6 +148,37 @@
 
   // ---- Fill lists ----
 
+  // The long lists are added the first time someone uses the form (or the dropdown),
+  // not on page load. Until then the Select only holds its placeholder.
+  function fillLater(select, type) {
+    var done = false;
+    var fill = function () {
+      if (done) return;
+      done = true;
+      fillList(select, type);
+    };
+    if (type === 'nationality') addCountryField(select);
+    var area = select.form || select.parentElement;
+    if (!area) return fill();
+    ['focusin', 'pointerdown'].forEach(function (t) { area.addEventListener(t, fill, true); });
+    area.addEventListener('touchstart', fill, { capture: true, passive: true });
+    if (select.form) select.form.addEventListener('hub:before-submit', fill);
+  }
+
+  // Also send the matching country, e.g. Nationality_country = United Kingdom.
+  function addCountryField(select) {
+    var hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.name = (select.name || 'Nationality') + '_country';
+    select.parentNode.insertBefore(hidden, select.nextSibling);
+    var update = function () {
+      var o = select.options[select.selectedIndex];
+      hidden.value = o ? (o.getAttribute('data-country') || '') : '';
+    };
+    select.addEventListener('change', update);
+    if (select.form) select.form.addEventListener('hub:before-submit', update);
+  }
+
   function fillList(select, type) {
     var keep = select.options.length && select.options[0].value === '' ? select.options[0] : null;
     select.innerHTML = '';
@@ -161,19 +192,6 @@
         o.setAttribute('data-country', n[1]);
         select.appendChild(o);
       });
-
-      // Also send the matching country, e.g. Nationality_country = United Kingdom.
-      var hidden = document.createElement('input');
-      hidden.type = 'hidden';
-      hidden.name = (select.name || 'Nationality') + '_country';
-      select.parentNode.insertBefore(hidden, select.nextSibling);
-      var update = function () {
-        var o = select.options[select.selectedIndex];
-        hidden.value = o ? (o.getAttribute('data-country') || '') : '';
-      };
-      select.addEventListener('change', update);
-      if (select.form) select.form.addEventListener('hub:before-submit', update);
-      update();
     }
 
     if (type === 'country') {
@@ -323,7 +341,10 @@
       return o.hidden || o.style.display === 'none';
     }
 
+    // The list items are built the first time the dropdown opens, not on page load.
+    var built = false;
     function build() {
+      built = true;
       list.innerHTML = '';
       items = [];
       var count = 0;
@@ -548,7 +569,7 @@
       pending = true;
       setTimeout(function () {
         pending = false;
-        build();
+        if (built) build(); else showValue();
         if (select.validity.valid) anchor.classList.remove('is-invalid');
       }, 0);
     }
@@ -568,7 +589,7 @@
     if (select.form) select.form.addEventListener('reset', function () { setTimeout(refresh, 0); });
 
     var api = { open: open, close: close, refresh: refresh, select: select, trigger: trigger };
-    build();
+    showValue(); // Show the current choice on the button. The list waits until it opens.
     return api;
   }
 
@@ -578,7 +599,7 @@
   // ---- Start ----
   Array.prototype.slice.call(document.querySelectorAll('select[data-select], select[data-select-list]')).forEach(function (select) {
     var type = (select.getAttribute('data-select-list') || '').trim().toLowerCase();
-    if (type) fillList(select, type);
+    if (type) fillLater(select, type);
     enhance(select);
   });
 })();

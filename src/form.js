@@ -8,6 +8,7 @@
  *   data-hub-form = true
  *   data-form-key = KEY
  * Optional: an empty div with data-hub-turnstile, to choose where Turnstile sits.
+ * Turnstile loads only when someone first clicks, taps or tabs into a form.
  *
  * Signals for other scripts: hub:before-submit, hub:success (on the form).
  * Settings: window.SB_CONFIG.workerUrl, .turnstileSiteKey, .form
@@ -280,6 +281,9 @@
     var waitLabel = button ? button.getAttribute('data-wait') : null;
     if (waitLabel) setLabel(button, waitLabel);
 
+    // In case the check has not started yet (for example, an autofilled form sent with Enter).
+    startCheck(form);
+
     // Turnstile runs out of sight. Wait up to a few seconds for its answer.
     waitForToken(s, TOKEN_WAIT_MS, function (token) {
       if (!token) return showFail();
@@ -349,14 +353,54 @@
   }
 
   // Checks for a Turnstile answer every 200 ms, up to maxMs.
+  // If the check only started now (the person sent the form straight away),
+  // allow extra time for Turnstile to load.
   function waitForToken(s, maxMs, done) {
     var started = Date.now();
+    if (!s.checkStartedAt || started - s.checkStartedAt < 1000) maxMs = maxMs * 2;
     (function check() {
       var token = (window.turnstile && s.widgetId !== null) ? window.turnstile.getResponse(s.widgetId) : '';
       if (token) return done(token);
       if (Date.now() - started >= maxMs) return done('');
       setTimeout(check, 200);
     })();
+  }
+
+  // ---- Turnstile: loads only when someone starts a form ----
+  // Nothing is downloaded on page load. The first time a person clicks, taps or
+  // tabs into a form, Turnstile loads and starts a check for that form only.
+
+  var turnstileState = 'idle'; // 'idle', 'loading', 'ready'
+  var waitingForms = [];
+
+  function renderCheck(form) {
+    var s = state.get(form);
+    if (!s || s.widgetId !== null) return;
+    // 'interaction-only': the box only shows if Cloudflare needs the person to click.
+    s.widgetId = window.turnstile.render(s.slot, {
+      sitekey: TURNSTILE_SITE_KEY,
+      appearance: 'interaction-only'
+    });
+  }
+
+  function startCheck(form) {
+    var s = state.get(form);
+    if (!s || s.checkStartedAt) return;
+    s.checkStartedAt = Date.now();
+
+    if (turnstileState === 'ready') return renderCheck(form);
+    waitingForms.push(form);
+    if (turnstileState === 'loading') return;
+
+    turnstileState = 'loading';
+    window.hubTurnstileReady = function () {
+      turnstileState = 'ready';
+      waitingForms.splice(0).forEach(renderCheck);
+    };
+    var ts = document.createElement('script');
+    ts.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=hubTurnstileReady';
+    ts.async = true;
+    document.head.appendChild(ts);
   }
 
   // Set up each form.
@@ -366,8 +410,14 @@
       loadedAt: Date.now(),
       slot: addTurnstileSlot(form),
       widgetId: null,
+      checkStartedAt: 0,
       busy: false
     });
+    var begin = function () { startCheck(form); };
+    ['focusin', 'pointerdown'].forEach(function (type) {
+      form.addEventListener(type, begin, true);
+    });
+    form.addEventListener('touchstart', begin, { capture: true, passive: true });
   });
 
   // Stop Webflow's own send. Use ours instead.
@@ -378,21 +428,4 @@
     e.stopImmediatePropagation();
     handleSubmit(form);
   }, true);
-
-  // Load Turnstile, then show one check in each form.
-  window.hubTurnstileReady = function () {
-    forms.forEach(function (form) {
-      var s = state.get(form);
-      // 'interaction-only': the box only shows if Cloudflare needs the person to click.
-      s.widgetId = window.turnstile.render(s.slot, {
-        sitekey: TURNSTILE_SITE_KEY,
-        appearance: 'interaction-only'
-      });
-    });
-  };
-
-  var ts = document.createElement('script');
-  ts.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=hubTurnstileReady';
-  ts.async = true;
-  document.head.appendChild(ts);
 })();

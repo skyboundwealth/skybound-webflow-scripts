@@ -11,6 +11,8 @@
  *   Phone_country  the 2-letter country code, like gb
  *   Phone_full     the full number, like +447911123456
  *
+ * Loads only when a phone field comes near the screen, or when someone starts the form.
+ *
  * Settings: window.SB_CONFIG.phone
  */
 (function () {
@@ -30,14 +32,6 @@
   if (!inputs.length) return; // No phone fields: load nothing.
 
   var base = 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/' + VERSION + '/build/';
-
-  // Flag images only. The library's own dropdown is not used.
-  if (SHOW_FLAGS) {
-    var css = document.createElement('link');
-    css.rel = 'stylesheet';
-    css.href = base + 'css/intlTelInput.min.css';
-    document.head.appendChild(css);
-  }
 
   var style = document.createElement('style');
   style.textContent = [
@@ -80,28 +74,61 @@
     try { window.sessionStorage.setItem(COUNTRY_KEY, code); } catch (e) {}
   }
 
-  var savedCountry = readSavedCountry();
-  var workerUrl = CONFIG.workerUrl || window.SB_WORKER_URL;
-  if (savedCountry !== null) {
-    finishCountry(savedCountry); // An empty value means the Worker did not know. Do not ask again.
-  } else if (workerUrl && window.fetch && !/YOUR-WORKER/.test(workerUrl)) {
-    setTimeout(function () { finishCountry(''); }, COUNTRY_WAIT_MS);
-    fetch(workerUrl, { method: 'GET' })
-      .then(function (res) { return res.json(); })
-      .then(function (body) {
-        var code = body && typeof body.country === 'string' ? body.country : '';
-        saveCountry(/^[a-z]{2}$/.test(code) ? code : '');
-        finishCountry(code);
-      })
-      .catch(function () { finishCountry(''); }); // Not saved, so the next page tries again.
-  } else {
-    finishCountry('');
+  // Nothing loads on page load. The library, the flags and the country lookup
+  // start when a phone field comes near the screen, or when someone starts the form.
+  // A form in a closed pop-up is hidden, so it waits until the pop-up opens.
+  var started = false;
+  function start() {
+    if (started) return;
+    started = true;
+    if (observer) observer.disconnect();
+
+    // Flag images only. The library's own dropdown is not used.
+    if (SHOW_FLAGS) {
+      var css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = base + 'css/intlTelInput.min.css';
+      document.head.appendChild(css);
+    }
+
+    var savedCountry = readSavedCountry();
+    var workerUrl = CONFIG.workerUrl || window.SB_WORKER_URL;
+    if (savedCountry !== null) {
+      finishCountry(savedCountry); // An empty value means the Worker did not know. Do not ask again.
+    } else if (workerUrl && window.fetch && !/YOUR-WORKER/.test(workerUrl)) {
+      setTimeout(function () { finishCountry(''); }, COUNTRY_WAIT_MS);
+      fetch(workerUrl, { method: 'GET' })
+        .then(function (res) { return res.json(); })
+        .then(function (body) {
+          var code = body && typeof body.country === 'string' ? body.country : '';
+          saveCountry(/^[a-z]{2}$/.test(code) ? code : '');
+          finishCountry(code);
+        })
+        .catch(function () { finishCountry(''); }); // Not saved, so the next page tries again.
+    } else {
+      finishCountry('');
+    }
+
+    var js = document.createElement('script');
+    js.src = base + 'js/intlTelInputWithUtils.min.js';
+    js.onload = function () { libraryDone = true; startWhenReady(); };
+    document.head.appendChild(js);
   }
 
-  var js = document.createElement('script');
-  js.src = base + 'js/intlTelInputWithUtils.min.js';
-  js.onload = function () { libraryDone = true; startWhenReady(); };
-  document.head.appendChild(js);
+  var observer = null;
+  if (window.IntersectionObserver) {
+    observer = new IntersectionObserver(function (entries) {
+      for (var i = 0; i < entries.length; i++) if (entries[i].isIntersecting) return start();
+    }, { rootMargin: '200px 0px' });
+    inputs.forEach(function (input) { observer.observe(input); });
+  } else {
+    start();
+  }
+  inputs.forEach(function (input) {
+    var area = input.form || input;
+    ['focusin', 'pointerdown'].forEach(function (t) { area.addEventListener(t, start, true); });
+    area.addEventListener('touchstart', start, { capture: true, passive: true });
+  });
 
   var countries = null;
 
@@ -166,12 +193,19 @@
     var basePadding = parseFloat(look.paddingLeft) || 0;
 
     // Wrap the input. The wrapper takes over the input's outer margin.
+    // Moving the input drops its focus, so put it back if the person is typing in it.
+    var hadFocus = document.activeElement === input;
+    var caret = hadFocus ? input.selectionStart : null;
     var wrap = document.createElement('div');
     wrap.className = 'sb-phone';
     wrap.style.margin = look.margin;
     input.parentNode.insertBefore(wrap, input);
     wrap.appendChild(input);
     input.style.margin = '0';
+    if (hadFocus) {
+      input.focus({ preventScroll: true });
+      try { input.setSelectionRange(caret, caret); } catch (e) {}
+    }
 
     // The visible dial code, inside the field on the left.
     var prefix = document.createElement('div');
