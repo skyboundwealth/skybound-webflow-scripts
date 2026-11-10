@@ -124,3 +124,16 @@ Old versions keep working, so a bad change can be undone by switching the versio
 
 The Hub country list has no Guatemala, South Sudan, Kosovo or Palestine. These nationalities
 currently send `Guatemala`, `South Sudan`, `Kosovo` and `Palestine`. Check what the Hub accepts.
+
+## Locale pop-up (locale.js)
+
+Loads on every page (footer). Opens the Lumos modal `data-modal-target="locale-switcher"` when the
+visitor's country does not match the page's locale, after the page transition has finished.
+
+- Country comes from the Worker, once per visit, shared with the phone picker (`src/geo.js`).
+- Locales: International (no folder), `uk`, `usa`, `europe` (EU 27), `switzerland`. Others go to International.
+- Heading: `data-locale-the` and `data-locale-country`. The recommended card gets `is-active` on
+  `.locale_switcher_element` and `.locale_switcher_recommended`.
+- The choice (a region, or closing the pop-up) is kept 30 days in the `sb_locale` cookie.
+- Flags (optional): `SB_CONFIG.locale.flags = { '': url, uk: url, usa: url, europe: url, switzerland: url }`.
+- Test: add `?sb-country=fr` to any page address.

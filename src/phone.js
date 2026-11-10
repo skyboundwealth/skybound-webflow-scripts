@@ -15,6 +15,8 @@
  *
  * Settings: window.SB_CONFIG.phone
  */
+import './geo.js';
+
 (function () {
   // Settings come from window.SB_CONFIG.phone in the Webflow footer (all optional).
   var CONFIG = window.SB_CONFIG || {};
@@ -64,16 +66,6 @@
     startWhenReady();
   }
 
-  // The country is saved for the visit (this browser tab), so the Worker is asked
-  // only once per visit, not on every page.
-  var COUNTRY_KEY = 'sb_country';
-  function readSavedCountry() {
-    try { return window.sessionStorage.getItem(COUNTRY_KEY); } catch (e) { return null; }
-  }
-  function saveCountry(code) {
-    try { window.sessionStorage.setItem(COUNTRY_KEY, code); } catch (e) {}
-  }
-
   // Nothing loads on page load. The library, the flags and the country lookup
   // start when a phone field comes near the screen, or when someone starts the form.
   // A form in a closed pop-up is hidden, so it waits until the pop-up opens.
@@ -91,23 +83,9 @@
       document.head.appendChild(css);
     }
 
-    var savedCountry = readSavedCountry();
-    var workerUrl = CONFIG.workerUrl || window.SB_WORKER_URL;
-    if (savedCountry !== null) {
-      finishCountry(savedCountry); // An empty value means the Worker did not know. Do not ask again.
-    } else if (workerUrl && window.fetch && !/YOUR-WORKER/.test(workerUrl)) {
-      setTimeout(function () { finishCountry(''); }, COUNTRY_WAIT_MS);
-      fetch(workerUrl, { method: 'GET' })
-        .then(function (res) { return res.json(); })
-        .then(function (body) {
-          var code = body && typeof body.country === 'string' ? body.country : '';
-          saveCountry(/^[a-z]{2}$/.test(code) ? code : '');
-          finishCountry(code);
-        })
-        .catch(function () { finishCountry(''); }); // Not saved, so the next page tries again.
-    } else {
-      finishCountry('');
-    }
+    // Visitor's country: one lookup per visit, shared with the locale pop-up (geo.js).
+    setTimeout(function () { finishCountry(''); }, COUNTRY_WAIT_MS);
+    window.SBGeo.country().then(finishCountry);
 
     var js = document.createElement('script');
     js.src = base + 'js/intlTelInputWithUtils.min.js';
