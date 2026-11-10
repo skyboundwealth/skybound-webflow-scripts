@@ -10,6 +10,7 @@
  *              data-locale-country  (holds the country name)
  *   Card:      .locale_switcher_element and .locale_switcher_recommended get is-active
  *              on the recommended locale. .locale_switcher_flag img gets the flag (optional).
+ *   Locale folders: uk, us, eu, ch. International has no folder.
  *
  * It waits until the page transition has finished, then a short pause.
  * The visitor's choice is remembered for 30 days (pick a region, close the pop-up,
@@ -31,17 +32,18 @@ import './geo.js';
   var FLAGS = pick(OPT.flags, {});                           // { '': url, uk: url, usa: url, ... }
   var COOKIE = 'sb_locale';
 
-  // Locale folders. '' = International (no folder).
-  var FOLDERS = ['uk', 'usa', 'europe', 'switzerland'];
+  // Locale folders in the page address. '' = International (no folder).
+  // uk = United Kingdom, us = USA, eu = Europe (EU 27), ch = Switzerland.
+  var FOLDERS = ['uk', 'us', 'eu', 'ch'];
 
   // Country (2-letter code) to locale folder. Anything not listed goes to International.
   var EU = ['at', 'be', 'bg', 'hr', 'cy', 'cz', 'dk', 'ee', 'fi', 'fr', 'de', 'gr', 'hu', 'ie',
             'it', 'lv', 'lt', 'lu', 'mt', 'nl', 'pl', 'pt', 'ro', 'sk', 'si', 'es', 'se'];
   function folderFor(country) {
     if (country === 'gb') return 'uk';
-    if (country === 'us') return 'usa';
-    if (country === 'ch') return 'switzerland';
-    if (EU.indexOf(country) !== -1) return 'europe';
+    if (country === 'us') return 'us';
+    if (country === 'ch') return 'ch';
+    if (EU.indexOf(country) !== -1) return 'eu';
     return '';
   }
 

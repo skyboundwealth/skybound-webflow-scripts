@@ -131,9 +131,9 @@ Loads on every page (footer). Opens the Lumos modal `data-modal-target="locale-s
 visitor's country does not match the page's locale, after the page transition has finished.
 
 - Country comes from the Worker, once per visit, shared with the phone picker (`src/geo.js`).
-- Locales: International (no folder), `uk`, `usa`, `europe` (EU 27), `switzerland`. Others go to International.
+- Locales: International (no folder), `uk`, `us`, `eu` (EU 27), `ch` (Switzerland). Others go to International.
 - Heading: `data-locale-the` and `data-locale-country`. The recommended card gets `is-active` on
   `.locale_switcher_element` and `.locale_switcher_recommended`.
 - The choice (a region, closing the pop-up, or landing on the right locale) is kept 30 days in the `sb_locale` cookie.
-- Flags (optional): `SB_CONFIG.locale.flags = { '': url, uk: url, usa: url, europe: url, switzerland: url }`.
+- Flags (optional): `SB_CONFIG.locale.flags = { '': url, uk: url, us: url, eu: url, ch: url }` (not needed if the Locales List shows the flags).
 - Test: add `?sb-country=fr` to any page address.
