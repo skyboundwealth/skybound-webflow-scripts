@@ -134,6 +134,6 @@ visitor's country does not match the page's locale, after the page transition ha
 - Locales: International (no folder), `uk`, `usa`, `europe` (EU 27), `switzerland`. Others go to International.
 - Heading: `data-locale-the` and `data-locale-country`. The recommended card gets `is-active` on
   `.locale_switcher_element` and `.locale_switcher_recommended`.
-- The choice (a region, or closing the pop-up) is kept 30 days in the `sb_locale` cookie.
+- The choice (a region, closing the pop-up, or landing on the right locale) is kept 30 days in the `sb_locale` cookie.
 - Flags (optional): `SB_CONFIG.locale.flags = { '': url, uk: url, usa: url, europe: url, switzerland: url }`.
 - Test: add `?sb-country=fr` to any page address.

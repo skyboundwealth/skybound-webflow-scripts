@@ -12,7 +12,8 @@
  *              on the recommended locale. .locale_switcher_flag img gets the flag (optional).
  *
  * It waits until the page transition has finished, then a short pause.
- * The visitor's choice is remembered for 30 days (pick a region, or close the pop-up).
+ * The visitor's choice is remembered for 30 days (pick a region, close the pop-up,
+ * or land on the right locale for their country).
  *
  * Test: add ?sb-country=fr to the page address. The saved choice is ignored while testing.
  * Settings: window.SB_CONFIG.locale
@@ -162,8 +163,12 @@ import './geo.js';
         });
       });
 
+      // Already on the right locale: remember it, so a later link to another locale does not open the pop-up.
+      if (best === current) {
+        if (!testing && !readChoice()) saveChoice(current || 'international');
+        return;
+      }
       // Open it only on the wrong locale, not for robots, and not if they already chose.
-      if (best === current) return;
       if (!testing && (readChoice() || isRobot())) return;
       // That locale is not live yet (no card for it). While testing, show it anyway.
       if (!testing && !items.some(function (c) { return c.folder === best; })) return;
