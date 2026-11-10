@@ -137,3 +137,14 @@ visitor's country does not match the page's locale, after the page transition ha
 - The choice (a region, closing the pop-up, or landing on the right locale) is kept 30 days in the `sb_locale` cookie.
 - Flags (optional): `SB_CONFIG.locale.flags = { '': url, uk: url, us: url, eu: url, ch: url }` (not needed if the Locales List shows the flags).
 - Test: add `?sb-country=fr` to any page address.
+
+## Exit pop-up (exit.js)
+
+Only on pages where it is added (Page settings, before `</body>`), and only for visitors who land
+with `?popup=NAME`. Opens the Lumos modal `data-modal-target="exit-NAME"`.
+
+- Desktop: the mouse leaves through the top. Phones: a fast, long scroll up after scrolling 1.5 screens down
+  (not a jump to the top).
+- Starts watching 4 seconds after the page transition. Landing page only. Once, then not for 30 days.
+- Never on top of another pop-up, while typing in a form, or after a form was sent.
+- Test: add `&popup-test` to the address to ignore the 30-day memory.
