@@ -333,10 +333,14 @@
 
         // Tell Google Tag Manager. No names or emails are sent.
         window.dataLayer = window.dataLayer || [];
+        var inModal = form.closest('[data-modal-target]');
         window.dataLayer.push({
           event: 'form_submit',
           form_key: payload.form_key,
-          page_slug: payload.page_slug
+          form_name: form.getAttribute('data-name') || form.getAttribute('name') || '',
+          page_slug: payload.page_slug,
+          locale: payload.locale || '',
+          modal: inModal ? inModal.getAttribute('data-modal-target') : ''
         });
 
         // Signal for other scripts (like the video unlock) that the form was sent.

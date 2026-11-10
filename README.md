@@ -148,3 +148,15 @@ with `?popup=NAME`. Opens the Lumos modal `data-modal-target="exit-NAME"`.
 - Starts watching 4 seconds after the page transition. Landing page only. Once, then not for 30 days.
 - Never on top of another pop-up, while typing in a form, or after a form was sent.
 - Test: add `&popup-test` to the address to ignore the 30-day memory.
+
+## GTM events (dataLayer)
+
+| Event | Data |
+| --- | --- |
+| `form_submit` | `form_key`, `form_name` (Webflow form name), `page_slug`, `locale`, `modal` (pop-up id, if the form is in one) |
+| `locale_popup_shown` | `popup_trigger` (auto / manual), `locale_current`, `locale_recommended`, `visitor_country` |
+| `locale_switch` | `locale_from`, `locale_to`, `locale_recommended`, `visitor_country` |
+| `locale_popup_closed` | `locale_current`, `visitor_country` |
+| `exit_popup_shown` / `exit_popup_closed` | `popup_name`, `popup_device` (desktop / mobile) |
+
+GA4 only receives these if GTM has a GA4 event tag for them.

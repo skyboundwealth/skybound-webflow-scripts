@@ -40,3 +40,20 @@ export function anyModalOpen() {
 export function isRobot() {
   return navigator.webdriver === true || /bot|crawl|spider|slurp|preview|lighthouse|headless/i.test(navigator.userAgent || '');
 }
+
+// Sends an event to Google Tag Manager (dataLayer). No personal data.
+export function track(event, params) {
+  window.dataLayer = window.dataLayer || [];
+  var data = { event: event };
+  for (var k in params) if (Object.prototype.hasOwnProperty.call(params, k)) data[k] = params[k];
+  window.dataLayer.push(data);
+}
+
+// Calls fn(true) when a dialog opens and fn(false) when it closes.
+export function watchDialog(dialog, fn) {
+  var wasOpen = dialog.hasAttribute('open');
+  new MutationObserver(function () {
+    var isOpen = dialog.hasAttribute('open');
+    if (isOpen !== wasOpen) { wasOpen = isOpen; fn(isOpen); }
+  }).observe(dialog, { attributes: true, attributeFilter: ['open'] });
+}

@@ -16,11 +16,12 @@
  * The visitor's choice is remembered for 30 days (pick a region, close the pop-up,
  * or land on the right locale for their country).
  *
+ * GTM events: locale_popup_shown, locale_switch, locale_popup_closed.
  * Test: add ?sb-country=fr to the page address. The saved choice is ignored while testing.
  * Settings: window.SB_CONFIG.locale
  */
 import './geo.js';
-import { afterTransition, whenModalReady, anyModalOpen, isRobot } from './ui.js';
+import { afterTransition, whenModalReady, anyModalOpen, isRobot, track, watchDialog } from './ui.js';
 
 (function () {
   var CONFIG = window.SB_CONFIG || {};
@@ -100,12 +101,42 @@ import { afterTransition, whenModalReady, anyModalOpen, isRobot } from './ui.js'
       if (img && FLAGS[c.folder]) img.src = FLAGS[c.folder];
     });
 
+    // For GTM: locale names as people read them. '' = international.
+    var label = function (folder) { return folder || 'international'; };
+    var visitorCountry = '';
+    var bestFolder = null;
+    var autoOpening = false;
+    var switched = false;
+
     // Picking a region, or closing the pop-up, is remembered.
     items.forEach(function (c) {
-      if (c.link) c.link.addEventListener('click', function () { saveChoice(c.folder || 'international'); });
+      if (c.link) c.link.addEventListener('click', function () {
+        saveChoice(c.folder || 'international');
+        switched = true;
+        track('locale_switch', {
+          locale_from: label(current),
+          locale_to: label(c.folder),
+          locale_recommended: bestFolder === null ? '' : label(bestFolder),
+          visitor_country: visitorCountry
+        });
+      });
     });
     if (modal.tagName === 'DIALOG') {
       modal.addEventListener('close', function () { if (!readChoice()) saveChoice('stay'); });
+      watchDialog(modal, function (open) {
+        if (open) {
+          switched = false;
+          track('locale_popup_shown', {
+            popup_trigger: autoOpening ? 'auto' : 'manual',
+            locale_current: label(current),
+            locale_recommended: bestFolder === null ? '' : label(bestFolder),
+            visitor_country: visitorCountry
+          });
+          autoOpening = false;
+        } else if (!switched) {
+          track('locale_popup_closed', { locale_current: label(current), visitor_country: visitorCountry });
+        }
+      });
     }
 
     var testing = window.SBGeo.isTest();
@@ -114,6 +145,8 @@ import { afterTransition, whenModalReady, anyModalOpen, isRobot } from './ui.js'
     window.SBGeo.country().then(function (country) {
       if (!country) return; // Unknown country: do nothing.
       var best = folderFor(country);
+      visitorCountry = country;
+      bestFolder = best;
 
       // Fill in the heading and mark the recommended card (also used when the nav opens the pop-up).
       var theEl = modal.querySelector('[data-locale-the]');
@@ -145,7 +178,9 @@ import { afterTransition, whenModalReady, anyModalOpen, isRobot } from './ui.js'
       afterTransition(function () {
         setTimeout(function () {
           whenModalReady(MODAL_ID, function () {
-            if (!anyModalOpen()) window.lumos.modal.open(MODAL_ID); // Not on top of another pop-up.
+            if (anyModalOpen()) return; // Not on top of another pop-up.
+            autoOpening = true;
+            window.lumos.modal.open(MODAL_ID);
           });
         }, DELAY_MS);
       });

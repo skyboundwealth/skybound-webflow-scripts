@@ -15,10 +15,11 @@
  * Never on top of another pop-up, never while someone is filling in a form,
  * and never after a form was sent on this page.
  *
+ * GTM events: exit_popup_shown, exit_popup_closed.
  * Test: add &popup-test to the address. The 30-day memory is ignored.
  * Settings: window.SB_CONFIG.exit
  */
-import { afterTransition, whenModalReady, anyModalOpen, isRobot } from './ui.js';
+import { afterTransition, whenModalReady, anyModalOpen, isRobot, track, watchDialog } from './ui.js';
 
 (function () {
   var CONFIG = window.SB_CONFIG || {};
@@ -36,7 +37,8 @@ import { afterTransition, whenModalReady, anyModalOpen, isRobot } from './ui.js'
   if (!/^[a-z0-9-]{1,40}$/.test(name)) return; // No (valid) query: do nothing.
 
   var modalId = 'exit-' + name;
-  if (!document.querySelector('[data-modal-target="' + modalId + '"]')) return;
+  var modal = document.querySelector('[data-modal-target="' + modalId + '"]');
+  if (!modal) return;
   if (isRobot()) return;
 
   var testing = params.has('popup-test');
@@ -78,6 +80,16 @@ import { afterTransition, whenModalReady, anyModalOpen, isRobot } from './ui.js'
   }
 
   var hasMouse = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // For GTM. A form sent from inside the pop-up shows as form_submit with modal = exit-NAME.
+  if (modal.tagName === 'DIALOG') {
+    watchDialog(modal, function (open) {
+      track(open ? 'exit_popup_shown' : 'exit_popup_closed', {
+        popup_name: name,
+        popup_device: hasMouse ? 'desktop' : 'mobile'
+      });
+    });
+  }
 
   if (hasMouse) {
     // Desktop: the mouse leaves the page through the top (towards the tabs or address bar).
